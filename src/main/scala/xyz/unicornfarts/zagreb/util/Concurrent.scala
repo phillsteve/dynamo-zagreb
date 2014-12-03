@@ -1,38 +1,12 @@
-package xyz.unicornfarts.dynamozagreb.util
-
-import scala.util.Try
-import scala.concurrent.{Future, future, ExecutionContext}
-
-trait Concurrent {
-  type R[+A]
-
-  val executionContext: Option[ExecutionContext] = None
-  implicit lazy val ec: ExecutionContext = executionContext match {
-    case Some(ec) => ec
-    case None => scala.concurrent.ExecutionContext.Implicits.global
-  }
-
-}
-trait Sync extends Concurrent {
-  type R[+A] = Option[Try[A]]
-}
-trait Async extends Concurrent {
-  type R[+A] = Future[A]
-}
-
-object Concurrent {
-  implicit class ExtendedConcurrent(val c: Concurrent) {
-    implicit val ec = c.ec
-    def execute[A](f:{ def task: A }): c.R[A] = this match {
-      case self: Sync => Some(f.task).asInstanceOf[c.R[A]]
-      case self: Async => future { f.task }.asInstanceOf[c.R[A]]
-    }
-  }
-}
 /*
 
 This code allow you to abstruct an operation that might be preformed either Syncronicly or Asyncronicly
-If 
+If  It defines the calling model for such calls. The return type for Async calls is defined to be a standard scala Future[A].
+For Sync calls the return type is defined to be Option[Try[A]].
+
+IMPORTANT NOTICE:
+For Async tasks either pass ExecutionContext implicitly or the Implicits.global will be used as defualt
+
 Example: 
 
 trait MyJob extends Concurrent {
@@ -61,3 +35,36 @@ object CodeConsumer {
   }
 }
 */
+
+package xyz.unicornfarts.dynamozagreb.util
+
+import scala.util.Try
+import scala.concurrent.{Future, future, ExecutionContext}
+
+trait Concurrent {
+  type R[+A]
+
+  val executionContext: Option[ExecutionContext] = None
+  implicit lazy val ec: ExecutionContext = executionContext match {
+    case Some(ec) => ec
+    case None => scala.concurrent.ExecutionContext.Implicits.global
+  }
+
+}
+trait Sync extends Concurrent {
+  type R[+A] = Option[Try[A]]
+}
+trait Async extends Concurrent {
+  type R[+A] = Future[A]
+}
+
+object Concurrent {
+  implicit class ExtendedConcurrent(val c: Concurrent) {
+    implicit val ec = c.ec
+    def executeTask[A](f:{ def task: A }): c.R[A] = this match {
+      case self: Sync => Some(f.task).asInstanceOf[c.R[A]]
+      case self: Async => future { f.task }.asInstanceOf[c.R[A]]
+    }
+  }
+}
+
