@@ -63,7 +63,7 @@ object Concurrent {
   implicit class ExtendedConcurrent(val c: Concurrent) {
     implicit val ec = c.ec
     def executeTask[A](f:{ def task: A }): c.R[A] = this match {
-      case self: Sync => Some(f.task).asInstanceOf[c.R[A]]
+      case self: Sync => Some( Try{ f.task } ).asInstanceOf[c.R[A]]
       case self: Async => future { f.task }.asInstanceOf[c.R[A]]
     }
   }
