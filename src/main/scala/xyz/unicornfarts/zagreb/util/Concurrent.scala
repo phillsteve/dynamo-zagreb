@@ -4,6 +4,7 @@ This code allow you to abstruct an operation that might be preformed either Sync
 If  It defines the calling model for such calls. The return type for Async calls is defined to be a standard scala Future[A].
 For Sync calls the return type is defined to be Option[Try[A]].
 
+You just define the task and the instance to execute it. The module handles the concurrency aspects.
 IMPORTANT NOTICE:
 For Async tasks either pass ExecutionContext implicitly or the Implicits.global will be used as defualt
 
